@@ -1,35 +1,61 @@
-# RollbackNet
+# 🎯 RollbackNet
 
-RollbackNet is a lightweight, zero-GC lag compensation and hit registration framework for Roblox. It utilizes native Luau buffers to provide server-authoritative hitscan networking without the memory overhead associated with traditional table-based snapshot systems.
+> **Zero-GC Server Authoritative Lag Compensation & Anti-Cheat Framework for Roblox**
 
-## Overview
+RollbackNet is a lightweight, zero-garbage-collection lag compensation and hit registration framework for Roblox. It utilizes native Luau buffers to provide server-authoritative hitscan networking without memory overhead. Perfect for competitive shooter games requiring strict anti-cheat validation and ping mitigation.
 
-In standard Roblox network models, hitscan weapons often suffer from desync due to client ping. RollbackNet solves this by keeping a historical record of hitbox positions on the server. When a client fires a weapon, the server rewinds the hitboxes to the exact moment the client pulled the trigger, validates the trajectory, and confirms the hit.
+---
 
-## Key Features
+## 📋 Overview
 
-- **Zero-GC Architecture:** Uses Luau `buffer` types to store positional history (ring buffer). This eliminates table allocation overhead and prevents Garbage Collection spikes, making it suitable for high-player-count servers.
-- **Server-Authoritative Validation:** Prevents common exploits (Silent Aim, Spinbots, Fire-rate modifiers).
-- **Recoil Verification:** Enforces strict deterministic recoil patterns (e.g., CS:GO style) on the server.
-- **Ping Mitigation:** Caps maximum rollback time (default 250ms) to prevent high-ping players from hitting targets that are already behind cover.
-- **Agnostic & Modular:** Does not require custom character controllers. It works out-of-the-box with standard R6/R15 models or custom rigs.
+In standard Roblox network models, hitscan weapons often suffer from desynchronization due to client ping. RollbackNet solves this by maintaining a historical record of hitbox positions on the server. When a client fires a shot, the server rolls back to the time when the shot was fired and validates the hit against the hitbox positions at that moment—eliminating ghost hits while preventing exploits.
 
-## Installation
+---
 
-1. Download the latest `RollbackNet.rbxm` from the Releases tab.
-2. Drag and drop the `.rbxm` file into Roblox Studio.
-3. Move the `RollbackNet` folder to `ReplicatedStorage`.
-4. Move the `RollbackNetServer` folder to `ServerScriptService`.
+## ✨ Key Features
 
-## Quick Start
+- **⚡ Zero-GC Architecture**
+  - Uses Luau `buffer` types to store positional history (ring buffer)
+  - Eliminates table allocation overhead
+  - Prevents Garbage Collection spikes during gameplay
 
-RollbackNet acts as a bridge. It handles the math and validation, but leaves game logic (health, damage, UI) entirely up to you.
+- **🛡️ Server-Authoritative Validation**
+  - Prevents common exploits: Silent Aim, Spinbots, Fire-rate modifiers
+  - Strict server-side enforcement of all weapon rules
+
+- **🔫 Recoil Verification**
+  - Enforces deterministic recoil patterns (CS:GO style)
+  - Validates client recoil application server-side
+
+- **📡 Ping Mitigation**
+  - Configurable maximum rollback time (default: 250ms)
+  - Prevents high-ping players from hitting targets already behind cover
+
+- **🔧 Agnostic & Modular**
+  - Works with standard R6/R15 models or custom rigs
+  - Drop-in ready—no custom character controllers required
+  - Strictly typed for safety and IDE support
+
+---
+
+## 📦 Installation
+
+1. Download the latest `RollbackNet.rbxm` from the [Releases](../../releases) tab
+2. Drag and drop the `.rbxm` file into Roblox Studio
+3. Move the `RollbackNet` folder to `ReplicatedStorage`
+4. Move the `RollbackNetServer` folder to `ServerScriptService`
+
+---
+
+## 🚀 Quick Start
+
+RollbackNet acts as a validation bridge—it handles the math and hit detection, but leaves game logic (health, damage, UI) entirely up to you.
 
 ### Server Implementation
 
-To track entities and listen for validated hits, set up a server script:
+Set up a server script to track entities and listen for validated hits:
 
---lua
+```lua
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -55,13 +81,13 @@ RollbackNetServer.OnHitConfirmed.Event:Connect(function(player, weaponName, rayc
         -- e.g., humanoid:TakeDamage(25)
     end
 end)
---
+```
 
 ### Client Implementation
 
-To fire a weapon, use the Client API and provide the origin and direction.
+Fire weapons using the Client API with origin and direction vectors:
 
---lua
+```lua
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
@@ -76,17 +102,19 @@ local function OnShootCommand()
     local origin = camera.CFrame.Position
     local direction = camera.CFrame.LookVector
     
-    -- Send the raw input to the framework. 
-    -- The client API will handle recoil application and timestamping.
+    -- Send the raw input to the framework
+    -- The client API will handle recoil application and timestamping
     ClientAPI.FireWeapon(weaponName, origin, direction * 1000)
 end
---
+```
 
-## Configuration
+---
 
-Weapon behaviors and anti-cheat strictness are defined in `ReplicatedStorage.RollbackNet.WeaponConfigs`. 
+## ⚙️ Configuration
 
---lua
+Weapon behaviors and anti-cheat strictness are defined in `ReplicatedStorage.RollbackNet.WeaponConfigs`:
+
+```lua
 return {
     ["Hardcore_Rifle"] = {
         FireRate = 0.1,
@@ -104,13 +132,35 @@ return {
         UseRecoilPatterns = false,
     }
 }
---
+```
 
-## Architecture Notes
+---
 
-* **SnapshotManager:** Runs on `RunService.Heartbeat`. Records the position of registered hitboxes into binary buffers.
-* **HitValidator:** Uses standard `workspace:Raycast`. It sets the `FilterType` to `Exclude` internally, ensuring that the ray accurately respects world geometry (walls, terrain) and only ignores the shooter's own character.
+## 🏗️ Architecture Notes
 
-## License
+- **SnapshotManager**
+  - Runs on `RunService.Heartbeat`
+  - Records hitbox positions into binary buffers at each frame
+  - Maintains a fixed-size ring buffer for efficient memory usage
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+- **HitValidator**
+  - Uses standard `workspace:Raycast` for hit detection
+  - Sets `FilterType` to `Exclude` internally
+  - Respects world geometry (walls, terrain)
+  - Validates shots against server-recorded positions at the time of firing
+
+---
+
+## 📝 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests.
+
+---
+
+**Made with ❤️ for competitive Roblox gaming**
